@@ -1,11 +1,15 @@
 export type KnownFace = {
   name: string;
   descriptor: number[];
+  dob?: string; // Date of birth in YYYY-MM-DD format
+  gender?: string; // Gender of the person
 };
 
 export type MatchResult = {
   name: string;
   distance: number;
+  dob?: string;
+  gender?: string;
 };
 
 const STORAGE_KEY = 'knownFaces';
@@ -38,7 +42,12 @@ function loadKnownFaces(): KnownFace[] {
     if (Array.isArray(parsed)) {
       cache = parsed
         .filter((x) => x && typeof x.name === 'string' && Array.isArray(x.descriptor))
-        .map((x) => ({ name: x.name, descriptor: x.descriptor as number[] }));
+        .map((x) => ({ 
+          name: x.name, 
+          descriptor: x.descriptor as number[],
+          dob: x.dob as string | undefined,
+          gender: x.gender as string | undefined
+        }));
       return cache;
     }
   } catch {
@@ -63,11 +72,55 @@ export function getKnownFaces(): KnownFace[] {
   return loadKnownFaces();
 }
 
-export function addKnownFace(name: string, descriptor: Float32Array | number[]): void {
+export function addKnownFace(name: string, descriptor: Float32Array | number[], dob?: string, gender?: string): void {
   const list = loadKnownFaces();
-  const item: KnownFace = { name, descriptor: toArray(descriptor) };
+  const item: KnownFace = { name, descriptor: toArray(descriptor), dob, gender };
   list.push(item);
   saveKnownFaces(list);
+}
+
+export function deleteFaceByIndex(index: number): void {
+  const list = loadKnownFaces();
+  if (index >= 0 && index < list.length) {
+    list.splice(index, 1);
+    saveKnownFaces(list);
+  }
+}
+
+export function updateFaceByIndex(index: number, name: string, dob?: string, gender?: string): void {
+  const list = loadKnownFaces();
+  if (index >= 0 && index < list.length) {
+    list[index] = { ...list[index], name, dob, gender };
+    saveKnownFaces(list);
+  }
+}
+
+export function calculateAge(dob: string): number {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
+export function clearAllFaces(): void {
+  cache = [];
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function invalidateCache(): void {
+  cache = null;
 }
 
 export function matchDescriptor(
@@ -82,7 +135,7 @@ export function matchDescriptor(
   for (const k of list) {
     const dist = euclidean(probe, k.descriptor);
     if (dist < best.distance) {
-      best = { name: k.name, distance: dist };
+      best = { name: k.name, distance: dist, dob: k.dob, gender: k.gender };
     }
   }
 

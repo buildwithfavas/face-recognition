@@ -1,17 +1,20 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Col, Container, Row } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../app/store';
+import FaceOverlay from '../components/FaceOverlay';
+import HelpModal from '../components/HelpModal';
+import ManageFacesModal from '../components/ManageFacesModal';
 import Navbar from '../components/Navbar';
 import SettingsModal from '../components/SettingsModal';
-import WebcamFeed from '../components/WebcamFeed';
 import UploadImage from '../components/UploadImage';
-import FaceOverlay from '../components/FaceOverlay';
-import { detectFaces } from '../features/faces/FaceService';
-import { setDetections } from '../features/faces/FacesSlice';
-import type { FaceResult } from '../features/faces/types';
+import WebcamFeed from '../components/WebcamFeed';
 import { startDetectionLoop, stopDetectionLoop } from '../features/camera/CameraService';
 import { selectStreaming, startStream, stopStream } from '../features/camera/CameraSlice';
+import { detectFaces } from '../features/faces/FaceService';
+import { clearDetections, setDetections } from '../features/faces/FacesSlice';
+import { calculateAge } from '../features/faces/Recognition';
+import type { FaceResult } from '../features/faces/types';
 
 export default function Home() {
   const dispatch = useDispatch<AppDispatch>();
@@ -26,6 +29,9 @@ export default function Home() {
   const uploadImgRef = useRef<HTMLImageElement | null>(null);
   const captureRef = useRef<(() => void) | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showManageFaces, setShowManageFaces] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const [showExpressions, setShowExpressions] = useState<boolean>(() => {
     try {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('app.settings.showExpressions') : null;
@@ -94,8 +100,12 @@ export default function Home() {
         e.preventDefault();
         captureRef.current?.();
       } else if (e.key === 's' || e.key === 'S') {
-        if (streaming) dispatch(stopStream());
-        else dispatch(startStream());
+        if (streaming) {
+          dispatch(stopStream());
+          dispatch(clearDetections());
+        } else {
+          dispatch(startStream());
+        }
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -124,7 +134,7 @@ export default function Home() {
       };
     }
     return;
-  }, [streaming, videoEl, dispatch, intervalMs, useTiny, minConfidence]);
+  }, [streaming, videoEl, dispatch, intervalMs, useTiny, minConfidence, forceUpdate]);
 
   const runDetectionOnDataUrl = useCallback(async (dataUrl: string) => {
     const img = new Image();
@@ -153,14 +163,24 @@ export default function Home() {
     uploadWrapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
+
+  const handleFaceRegistered = useCallback(() => {
+    // Force re-render to update detections with new names
+    setForceUpdate(prev => prev + 1);
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      <Navbar onUploadClick={handleUploadClick} onSettingsClick={() => setShowSettings(true)} />
-      <Container fluid className="py-4 px-4">
-        <Row className="g-4">
-          {/* Left Panel - Webcam Feed */}
-          <Col xs={12} lg={7}>
-            <div style={{ position: 'relative' }}>
+      <Navbar 
+        onUploadClick={handleUploadClick} 
+        onSettingsClick={() => setShowSettings(true)}
+        onHelpClick={() => setShowHelp(true)}
+      />
+      <Container fluid className="p-0">
+        <Row className="g-0" style={{ minHeight: 'calc(100vh - 56px)' }}>
+          {/* Left - Webcam Feed */}
+          <Col xs={12} lg={8} className="d-flex" style={{ backgroundColor: 'var(--bg-primary)', padding: '12px' }}>
+            <div className="w-100" style={{ position: 'relative' }}>
               {fallbackMsg && (
                 <Alert variant="warning" className="mb-3">
                   {fallbackMsg}
@@ -178,13 +198,13 @@ export default function Home() {
                       zIndex: 10,
                       backgroundColor: 'var(--accent-blue)',
                       color: 'white',
-                      padding: '4px 12px',
+                      padding: '6px 12px',
                       borderRadius: '4px',
-                      fontSize: '14px',
-                      fontWeight: '500'
+                      fontSize: '13px',
+                      fontWeight: '600'
                     }}
                   >
-                    Person {detections.length}
+                    {detections.length} {detections.length === 1 ? 'Face' : 'Faces'} Detected
                   </div>
                 )}
                 
@@ -234,100 +254,123 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              
+            </div>
+          </Col>
+          
+          {/* Right - Sidebar */}
+          <Col xs={12} lg={4} className="d-flex align-items-stretch" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <div 
+              className="d-flex flex-column w-100" 
+              style={{ 
+                backgroundColor: 'var(--bg-card)', 
+                borderRadius: '8px',
+                padding: '16px',
+                margin: '12px',
+                alignSelf: 'stretch'
+              }}
+            >
+              {/* Manage Users Button */}
+              <button
+                className="btn btn-primary w-100 mb-2 mb-lg-3"
+                onClick={() => setShowManageFaces(true)}
+                style={{ 
+                  borderRadius: '6px',
+                  padding: '10px 12px',
+                  fontWeight: '600',
+                  fontSize: '13px'
+                }}
+              >
+                Manage Users
+              </button>
+
               {/* Control Buttons */}
-              <div className="mt-3 d-flex gap-2">
+              <div className="d-flex gap-2 mb-3 mb-lg-4">
                 <button
-                  className="btn btn-primary d-flex align-items-center gap-2 px-4"
+                  className="btn btn-primary d-flex align-items-center justify-content-center gap-2 flex-grow-1"
                   onClick={() => dispatch(startStream())}
                   disabled={streaming}
-                  style={{ borderRadius: '6px' }}
+                  style={{ borderRadius: '6px', padding: '8px 10px', fontSize: '12px' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M12 17C14.2091 17 16 15.2091 16 13C16 10.7909 14.2091 9 12 9C9.79086 9 8 10.7909 8 13C8 15.2091 9.79086 17 12 17Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  Start Webcam
+                  Start Camera
                 </button>
                 <button
-                  className="btn btn-secondary d-flex align-items-center gap-2 px-4"
-                  onClick={() => dispatch(stopStream())}
+                  className="btn d-flex align-items-center justify-content-center gap-2 flex-grow-1"
+                  onClick={() => {
+                    dispatch(stopStream());
+                    dispatch(clearDetections());
+                  }}
                   disabled={!streaming}
                   style={{ 
+                    backgroundColor: 'var(--bg-secondary)', 
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
                     borderRadius: '6px',
-                    backgroundColor: 'var(--bg-secondary)',
-                    borderColor: 'var(--border-color)',
-                    color: 'var(--text-primary)'
+                    padding: '8px 10px',
+                    fontSize: '12px'
                   }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <rect x="8" y="8" width="8" height="8" fill="currentColor"/>
-                  </svg>
-                  Stop Webcam
+                  {streaming ? (
+                    <span 
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        backgroundColor: '#ef4444',
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }}
+                    />
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" fill="currentColor" />
+                    </svg>
+                  )}
+                  Stop Camera
                 </button>
               </div>
-            </div>
-          </Col>
 
-          {/* Right Panel - Detected Faces & Upload */}
-          <Col xs={12} lg={5}>
-            <div 
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                padding: '24px',
-                height: '100%'
-              }}
-            >
-              <h5 style={{ marginBottom: '24px', fontWeight: '600' }}>Detected Faces</h5>
-              
-              {/* Detections List */}
-              {detections.length > 0 ? (
-                <div style={{ marginBottom: '24px' }}>
-                  {detections.map((d, idx) => (
-                    <div 
-                      key={d.id}
-                      style={{
-                        padding: '16px 0',
-                        borderBottom: idx < detections.length - 1 ? '1px solid var(--border-color)' : 'none'
-                      }}
-                    >
-                      <h6 style={{ marginBottom: '12px', fontWeight: '600' }}>Person {idx + 1}</h6>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
-                        <div>
-                          <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Name</div>
-                          <div>{d.name || 'Jane Doe'}</div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Age</div>
-                          <div>{d.age || '32'}</div>
-                        </div>
-                        <div>
-                          <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Gender</div>
-                          <div>{d.gender || 'Female'}</div>
-                        </div>
-                        {showExpressions && d.expressions && (
-                          <div>
-                            <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>Emotion</div>
-                            <div style={{ textTransform: 'capitalize' }}>
-                              {Object.entries(d.expressions).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Happy'}
-                            </div>
+              {/* Detected Faces Section */}
+              <div className="flex-grow-1" style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 250px)' }}>
+                <h5 style={{ marginBottom: '12px', fontWeight: '600', fontSize: '15px' }}>Detected Faces</h5>
+                {detections.length > 0 ? (
+                  <div>
+                    {detections.map((d) => (
+                      <div 
+                        key={d.id}
+                        style={{
+                          backgroundColor: 'var(--bg-secondary)',
+                          borderRadius: '6px',
+                          padding: '10px',
+                          marginBottom: '10px'
+                        }}
+                      >
+                        <div style={{ marginBottom: '8px' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Name</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                            {d.name || 'Unknown'}
                           </div>
-                        )}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Details</div>
+                          <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
+                            {d.dob ? calculateAge(d.dob) : (d.age || 'N/A')}, {d.gender ? d.gender.charAt(0).toUpperCase() + d.gender.slice(1) : 'N/A'}, {showExpressions && d.expressions ? Object.entries(d.expressions).sort((a, b) => b[1] - a[1])[0]?.[0].charAt(0).toUpperCase() + Object.entries(d.expressions).sort((a, b) => b[1] - a[1])[0]?.[0].slice(1) : 'N/A'}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ marginBottom: '24px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
-                  No faces detected yet
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px', fontSize: '13px' }}>
+                    No faces detected yet
+                  </div>
+                )}
+              </div>
               
-              {/* Upload Area */}
-              <div ref={uploadWrapRef}>
+              {/* Hidden Upload Area */}
+              <div ref={uploadWrapRef} style={{ display: 'none' }}>
                 <UploadImage onUpload={handleUpload} />
               </div>
             </div>
@@ -347,6 +390,15 @@ export default function Home() {
         onChangeMinConfidence={setMinConfidence}
         facingMode={facingMode}
         onChangeFacingMode={setFacingMode}
+      />
+      <ManageFacesModal
+        show={showManageFaces}
+        onHide={() => setShowManageFaces(false)}
+        onFacesChanged={handleFaceRegistered}
+      />
+      <HelpModal
+        show={showHelp}
+        onHide={() => setShowHelp(false)}
       />
     </div>
   );

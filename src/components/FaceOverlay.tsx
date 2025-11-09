@@ -8,6 +8,24 @@ type Props = {
   mirrored?: boolean;
 };
 
+// Get color based on emotion
+function getEmotionColor(emotion?: string): string {
+  if (!emotion) return '#3b82f6'; // Default blue
+  
+  const emotionLower = emotion.toLowerCase();
+  const colorMap: Record<string, string> = {
+    happy: '#10b981',      // Green
+    sad: '#3b82f6',        // Blue
+    angry: '#ef4444',      // Red
+    surprised: '#f59e0b',  // Orange
+    neutral: '#14b8a6',    // Teal/Cyan
+    disgusted: '#8b5cf6',  // Purple
+    fearful: '#6366f1',    // Indigo
+  };
+  
+  return colorMap[emotionLower] || '#3b82f6';
+}
+
 export default function FaceOverlay({ videoRef, detections, showExpressions = true, mirrored = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -63,17 +81,22 @@ export default function FaceOverlay({ videoRef, detections, showExpressions = tr
         x = Math.round(w - (x + bw));
       }
 
-      // Blue border for detected face
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, bw, bh);
-
+      // Get top emotion and its color
       const topExpr = showExpressions && d.expressions
         ? Object.entries(d.expressions).sort((a, b) => b[1] - a[1])[0]
         : undefined;
+      const topEmotion = topExpr?.[0];
+      const emotionColor = getEmotionColor(topEmotion);
+      
+      // Emotion-based color for border
+      ctx.strokeStyle = emotionColor;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, bw, bh);
+
       const exprText = topExpr ? `${topExpr[0]} ${(topExpr[1] * 100).toFixed(0)}%` : undefined;
       const labelParts: string[] = [];
-      if (d.name) labelParts.push(d.name);
+      // Always show name first (or "Unknown" if not registered)
+      labelParts.push(d.name || 'Unknown');
       if (typeof d.age === 'number') labelParts.push(`age ${d.age}`);
       if (d.gender) labelParts.push(d.gender);
       if (exprText) labelParts.push(exprText);
@@ -86,8 +109,8 @@ export default function FaceOverlay({ videoRef, detections, showExpressions = tr
         const textH = 16 + padding * 2;
         const bx = x;
         const by = Math.max(0, y - textH - 4);
-        // Blue background for label
-        ctx.fillStyle = '#3b82f6';
+        // Emotion-based color for label background
+        ctx.fillStyle = emotionColor;
         ctx.fillRect(bx, by, textW, textH);
         ctx.fillStyle = '#fff';
         ctx.fillText(label, bx + padding, by + padding);

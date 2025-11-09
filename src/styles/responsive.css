@@ -1,0 +1,47 @@
+/* Mobile-specific styles */
+@media (max-width: 991px) {
+  /* Stack layout on mobile */
+  .border-lg-top-0 {
+    border-left: none !important;
+  }
+}
+
+@media (min-width: 992px) {
+  /* Desktop layout */
+  .border-lg-top-0 {
+    border-top: none !important;
+  }
+}
+
+/* Ensure smooth scrolling on mobile */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Reduce padding on small screens */
+  .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 576px) {
+  button {
+    min-height: 42px;
+    touch-action: manipulation;
+  }
+}
+
+/* Recording indicator animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}

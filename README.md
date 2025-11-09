@@ -12,17 +12,34 @@
   - Gender classification
   - Emotion recognition (7 emotions: neutral, happy, sad, angry, fearful, disgusted, surprised)
   - Face recognition and matching
+- **Face Registration:** Register faces with names for automatic recognition
 - **Image Upload:** Analyze faces in uploaded images (PNG/JPEG)
-- **Visual Overlay:** Green bounding boxes with labels showing face attributes
+- **Visual Overlay:** Emotion-based color-coded bounding boxes with labels showing:
+  - Name (registered or "Unknown")
+  - Age, Gender, Emotion with confidence
+  - **Green** for happy, **Red** for angry, **Blue** for sad, and more!
 - **Responsive Design:** Works seamlessly on desktop and mobile devices
 
 ### Advanced Features
-- **Face Enrollment:** Save and recognize known faces
+- **Face Registration System:**
+  - Register unknown faces with names
+  - Store facial descriptors in browser localStorage
+  - Automatic recognition when registered people appear
+  - Manage database (view/delete registered faces)
+- **Emotion-Based Color Coding:**
+  - Happy → Green (#10b981)
+  - Angry → Red (#ef4444)
+  - Sad → Blue (#3b82f6)
+  - Surprised → Orange (#f59e0b)
+  - Neutral → Teal (#14b8a6)
+  - Disgusted → Purple (#8b5cf6)
+  - Fearful → Indigo (#6366f1)
 - **Configurable Settings:** Adjust detection frequency, model type, confidence threshold
 - **Privacy-First:** All processing happens locally in your browser, no data sent to servers
 - **Download Results:** Export annotated images with detected faces
 - **Mobile Support:** Front/back camera switching on mobile devices
 - **Keyboard Shortcuts:** Quick actions with Space and S keys
+- **Help System:** In-app guide with accordion sections
 
 ## 🛠️ Tech Stack
 
@@ -46,8 +63,13 @@ This application fulfills 100% of client requirements:
 - ✅ Redux state management
 - ✅ **Bonus:** Image upload functionality
 - ✅ **Bonus:** Real-time emotion recognition
+- ✅ **Extra:** Face registration and persistent storage
+- ✅ **Extra:** Emotion-based color coding
+- ✅ **Extra:** Name display in overlay
 
 See [REQUIREMENTS_COMPLIANCE.md](./REQUIREMENTS_COMPLIANCE.md) for detailed analysis.
+See [EMOTION_COLOR_GUIDE.md](./EMOTION_COLOR_GUIDE.md) for color coding details.
+See [FACE_REGISTRATION_GUIDE.md](./FACE_REGISTRATION_GUIDE.md) for registration system guide.
 
 ## 🚀 Quick Start
 

@@ -17,6 +17,7 @@ export interface FaceResult {
   expressions?: FaceExpressions;
   name?: string;
   features?: number[]; // feature vector (embeddings)
+  dob?: string; // date of birth from matched face
 }
 
 export interface Person {

@@ -34,9 +34,10 @@ function toFaceResults(items: Array<any>): FaceResult[] {
       },
       score: typeof it.detection?.score === 'number' ? it.detection.score : undefined,
       age: typeof it.age === 'number' ? Math.round(it.age) : undefined,
-      gender: it.gender as any,
+      gender: match.gender || (it.gender as any),
       expressions: it.expressions as Record<string, number> | undefined,
       name: match.name !== 'unknown' ? match.name : undefined,
+      dob: match.dob,
       features: Array.isArray(it.descriptor)
         ? (it.descriptor as number[])
         : it.descriptor instanceof Float32Array
