@@ -6,6 +6,7 @@ export type DetectionsListProps = {
   sourceRef: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement | null;
   detections: FaceResult[];
   maxThumbSize?: number;
+  showExpressions?: boolean;
 };
 
 type Thumb = { id: string; url: string };
@@ -49,7 +50,7 @@ function cropToDataURL(
   return canvas.toDataURL('image/jpeg', 0.9);
 }
 
-export default function DetectionsList({ sourceRef, detections, maxThumbSize = 96 }: DetectionsListProps) {
+export default function DetectionsList({ sourceRef, detections, maxThumbSize = 96, showExpressions = true }: DetectionsListProps) {
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const lastCountRef = useRef(0);
 
@@ -98,7 +99,7 @@ export default function DetectionsList({ sourceRef, detections, maxThumbSize = 9
                 {typeof d.age === 'number' && <Badge bg="secondary">Age {d.age}</Badge>}
                 {d.gender && <Badge bg="secondary">{d.gender}</Badge>}
               </div>
-              {expr.length > 0 && (
+              {showExpressions && expr.length > 0 && (
                 <div className="mt-1 d-flex flex-wrap gap-2">
                   {expr.map(([k, v]) => (
                     <Badge key={k} bg="info" title={k}>

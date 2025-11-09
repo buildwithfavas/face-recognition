@@ -2,20 +2,22 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { FaceResult } from '../features/faces/types';
 
 type Props = {
-  videoRef: HTMLVideoElement | null;
+  videoRef: HTMLVideoElement | HTMLImageElement | null;
   detections: FaceResult[];
+  showExpressions?: boolean;
 };
 
-export default function FaceOverlay({ videoRef, detections }: Props) {
+export default function FaceOverlay({ videoRef, detections, showExpressions = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const size = useMemo(() => {
     const w = videoRef?.clientWidth ?? 0;
     const h = videoRef?.clientHeight ?? 0;
-    const vw = videoRef?.videoWidth ?? w;
-    const vh = videoRef?.videoHeight ?? h;
+    const isImg = typeof HTMLImageElement !== 'undefined' && videoRef instanceof HTMLImageElement;
+    const vw = isImg ? (videoRef as HTMLImageElement).naturalWidth || w : (videoRef as HTMLVideoElement | null)?.videoWidth ?? w;
+    const vh = isImg ? (videoRef as HTMLImageElement).naturalHeight || h : (videoRef as HTMLVideoElement | null)?.videoHeight ?? h;
     return { w, h, vw, vh };
-  }, [videoRef?.clientWidth, videoRef?.clientHeight, videoRef?.videoWidth, videoRef?.videoHeight]);
+  }, [videoRef?.clientWidth, videoRef?.clientHeight, (videoRef as any)?.videoWidth, (videoRef as any)?.videoHeight, (videoRef as any)?.naturalWidth, (videoRef as any)?.naturalHeight]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,7 +56,7 @@ export default function FaceOverlay({ videoRef, detections }: Props) {
       ctx.strokeStyle = 'lime';
       ctx.strokeRect(x, y, bw, bh);
 
-      const topExpr = d.expressions
+      const topExpr = showExpressions && d.expressions
         ? Object.entries(d.expressions).sort((a, b) => b[1] - a[1])[0]
         : undefined;
       const exprText = topExpr ? `${topExpr[0]} ${(topExpr[1] * 100).toFixed(0)}%` : undefined;
@@ -78,7 +80,7 @@ export default function FaceOverlay({ videoRef, detections }: Props) {
         ctx.fillText(label, bx + padding, by + padding);
       }
     });
-  }, [detections, size]);
+  }, [detections, size, showExpressions]);
 
   useEffect(() => {
     if (!videoRef) return;

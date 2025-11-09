@@ -1,12 +1,10 @@
-import { Container, Button } from 'react-bootstrap';
+import { Container } from 'react-bootstrap';
+import Home from './pages/Home';
 
 function App() {
   return (
-    <Container className="text-center mt-5">
-      <h1>Facial Recognition</h1>
-      <Button variant="primary" className="mt-3">
-        Start Detection
-      </Button>
+    <Container fluid as="main" role="main" aria-label="Facial Recognition Application">
+      <Home />
     </Container>
   );
 }

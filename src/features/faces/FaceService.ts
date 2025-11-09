@@ -1,6 +1,7 @@
 import * as faceapi from '@vladmandic/face-api';
 import { loadModels } from '../../utils/modelLoader';
 import type { FaceResult } from './types';
+import { matchDescriptor } from './Recognition';
 
 export async function init(): Promise<void> {
   await loadModels();
@@ -20,24 +21,29 @@ function ensureModelsLoaded(): void {
 }
 
 function toFaceResults(items: Array<any>): FaceResult[] {
-  return items.map((it: any, idx: number) => ({
-    id: `${Date.now()}-${idx}`,
-    box: {
-      x: Math.max(0, Math.round(it.detection.box.x)),
-      y: Math.max(0, Math.round(it.detection.box.y)),
-      width: Math.max(0, Math.round(it.detection.box.width)),
-      height: Math.max(0, Math.round(it.detection.box.height)),
-    },
-    score: typeof it.detection?.score === 'number' ? it.detection.score : undefined,
-    age: typeof it.age === 'number' ? Math.round(it.age) : undefined,
-    gender: it.gender as any,
-    expressions: it.expressions as Record<string, number> | undefined,
-    features: Array.isArray(it.descriptor)
-      ? (it.descriptor as number[])
-      : it.descriptor instanceof Float32Array
-      ? Array.from(it.descriptor as Float32Array)
-      : undefined,
-  }));
+  return items.map((it: any, idx: number) => {
+    const rawDesc: Float32Array | number[] | undefined = it.descriptor as any;
+    const match = rawDesc ? matchDescriptor(rawDesc) : { name: 'unknown', distance: Number.POSITIVE_INFINITY };
+    return {
+      id: `${Date.now()}-${idx}`,
+      box: {
+        x: Math.max(0, Math.round(it.detection.box.x)),
+        y: Math.max(0, Math.round(it.detection.box.y)),
+        width: Math.max(0, Math.round(it.detection.box.width)),
+        height: Math.max(0, Math.round(it.detection.box.height)),
+      },
+      score: typeof it.detection?.score === 'number' ? it.detection.score : undefined,
+      age: typeof it.age === 'number' ? Math.round(it.age) : undefined,
+      gender: it.gender as any,
+      expressions: it.expressions as Record<string, number> | undefined,
+      name: match.name !== 'unknown' ? match.name : undefined,
+      features: Array.isArray(it.descriptor)
+        ? (it.descriptor as number[])
+        : it.descriptor instanceof Float32Array
+        ? Array.from(it.descriptor as Float32Array)
+        : undefined,
+    } as FaceResult;
+  });
 }
 
 export type DetectOptions = {

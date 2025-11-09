@@ -8,17 +8,21 @@ import { selectDeviceId, selectStreaming, startStream, stopStream } from '../fea
 type Props = {
   onCapture: (imageDataUrl: string) => void;
   mirrored?: boolean;
+  captureRef?: React.MutableRefObject<(() => void) | null>;
+  facingMode?: 'user' | 'environment';
 };
 
-export default function WebcamFeed({ onCapture, mirrored = false }: Props) {
+export default function WebcamFeed({ onCapture, mirrored = false, captureRef, facingMode = 'user' }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const streaming = useSelector(selectStreaming);
   const deviceId = useSelector(selectDeviceId);
   const webcamRef = useRef<Webcam | null>(null);
 
   const videoConstraints = useMemo<MediaTrackConstraints | undefined>(() => {
-    return deviceId ? { deviceId: { exact: deviceId } } : undefined;
-  }, [deviceId]);
+    const base: MediaTrackConstraints = { facingMode };
+    if (deviceId) return { ...base, deviceId: { exact: deviceId } };
+    return base;
+  }, [deviceId, facingMode]);
 
   const handleStart = useCallback(() => {
     dispatch(startStream());
@@ -35,6 +39,11 @@ export default function WebcamFeed({ onCapture, mirrored = false }: Props) {
     }
   }, [onCapture]);
 
+  // expose capture to parent if requested
+  if (captureRef) {
+    captureRef.current = handleCapture;
+  }
+
   return (
     <Card className="w-100">
       <Card.Body>
@@ -45,7 +54,7 @@ export default function WebcamFeed({ onCapture, mirrored = false }: Props) {
                 ref={webcamRef}
                 audio={false}
                 screenshotFormat="image/jpeg"
-                videoConstraints={{ ...videoConstraints, facingMode: 'user' }}
+                videoConstraints={videoConstraints}
                 mirrored={mirrored}
                 className="img-fluid w-100"
               />

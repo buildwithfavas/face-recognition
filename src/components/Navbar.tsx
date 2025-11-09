@@ -7,9 +7,10 @@ import { selectStreaming, startStream, stopStream } from '../features/camera/Cam
 type Props = {
   onUploadClick?: () => void;
   title?: string;
+  onSettingsClick?: () => void;
 };
 
-export default function Navbar({ onUploadClick, title = 'Facial Recognition' }: Props) {
+export default function Navbar({ onUploadClick, title = 'Facial Recognition', onSettingsClick }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const streaming = useSelector(selectStreaming);
 
@@ -21,7 +22,7 @@ export default function Navbar({ onUploadClick, title = 'Facial Recognition' }: 
       <Container fluid>
         <BsNavbar.Brand className="fw-semibold">{title}</BsNavbar.Brand>
         <div className="ms-auto d-flex align-items-center">
-          <ButtonGroup>
+          <ButtonGroup className="me-2">
             <Button variant="success" onClick={handleStart} disabled={streaming}>
               Start
             </Button>
@@ -32,6 +33,9 @@ export default function Navbar({ onUploadClick, title = 'Facial Recognition' }: 
               Upload
             </Button>
           </ButtonGroup>
+          <Button variant="outline-dark" size="sm" onClick={onSettingsClick}>
+            Settings
+          </Button>
         </div>
       </Container>
     </BsNavbar>
