@@ -10,9 +10,10 @@ type Props = {
   mirrored?: boolean;
   captureRef?: React.MutableRefObject<(() => void) | null>;
   facingMode?: 'user' | 'environment';
+  embed?: boolean; // when true, render bare video that fills parent (no Card padding)
 };
 
-export default function WebcamFeed({ onCapture, mirrored = false, captureRef, facingMode = 'user' }: Props) {
+export default function WebcamFeed({ onCapture, mirrored = false, captureRef, facingMode = 'user', embed = false }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const streaming = useSelector(selectStreaming);
   const deviceId = useSelector(selectDeviceId);
@@ -42,6 +43,24 @@ export default function WebcamFeed({ onCapture, mirrored = false, captureRef, fa
   // expose capture to parent if requested
   if (captureRef) {
     captureRef.current = handleCapture;
+  }
+
+  if (embed) {
+    // Bare rendering: video fills parent; use contain to avoid cropping so overlay math stays correct
+    return streaming ? (
+      <Webcam
+        ref={webcamRef}
+        audio={false}
+        screenshotFormat="image/jpeg"
+        videoConstraints={videoConstraints}
+        mirrored={mirrored}
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+      />
+    ) : (
+      <div className="bg-light border d-flex align-items-center justify-content-center w-100 h-100">
+        <span className="text-muted">Camera is stopped</span>
+      </div>
+    );
   }
 
   return (

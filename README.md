@@ -1,23 +1,136 @@
+# Facial Recognition Web Application
 
+> A real-time facial recognition system built with React, TypeScript, and TensorFlow.js that runs entirely in your browser.
 
+## 🎯 Features
 
+### Core Capabilities
+- **Real-time Face Detection:** Continuously detect faces from webcam feed
+- **Multiple Face Support:** Detect and track multiple faces simultaneously
+- **Facial Analysis:**
+  - Age estimation
+  - Gender classification
+  - Emotion recognition (7 emotions: neutral, happy, sad, angry, fearful, disgusted, surprised)
+  - Face recognition and matching
+- **Image Upload:** Analyze faces in uploaded images (PNG/JPEG)
+- **Visual Overlay:** Green bounding boxes with labels showing face attributes
+- **Responsive Design:** Works seamlessly on desktop and mobile devices
 
+### Advanced Features
+- **Face Enrollment:** Save and recognize known faces
+- **Configurable Settings:** Adjust detection frequency, model type, confidence threshold
+- **Privacy-First:** All processing happens locally in your browser, no data sent to servers
+- **Download Results:** Export annotated images with detected faces
+- **Mobile Support:** Front/back camera switching on mobile devices
+- **Keyboard Shortcuts:** Quick actions with Space and S keys
 
-Keyboard shortcuts:
-Space: Capture a snapshot (when webcam is active).
-S: Start/Stop webcam streaming.
-Shortcuts are disabled while typing inside input fields or text areas.
+## 🛠️ Tech Stack
 
-How to run locally:
+- **Frontend:** React 19 + TypeScript
+- **State Management:** Redux Toolkit
+- **UI Framework:** React Bootstrap 5
+- **Face Recognition:** @vladmandic/face-api (TensorFlow.js)
+- **Build Tool:** Vite
+- **Webcam Access:** react-webcam (MediaDevices.getUserMedia API)
+
+## 📋 Requirements Met
+
+This application fulfills 100% of client requirements:
+- ✅ React + TypeScript implementation
+- ✅ Start/Stop webcam controls
+- ✅ Facial recognition with TensorFlow.js
+- ✅ Visual overlay on detected faces
+- ✅ Display name, age, gender, and emotions
+- ✅ Multiple face detection
+- ✅ Responsive desktop and mobile design
+- ✅ Redux state management
+- ✅ **Bonus:** Image upload functionality
+- ✅ **Bonus:** Real-time emotion recognition
+
+See [REQUIREMENTS_COMPLIANCE.md](./REQUIREMENTS_COMPLIANCE.md) for detailed analysis.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 16+ and npm
+- Modern browser (Chrome, Firefox, Edge, Safari)
+- HTTPS connection (or localhost for development)
+
+### Installation
+```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-How to build for production:
-npm run build
-Outputs static assets to dist/ 
-(see Vite docs: https://vitejs.dev/guide/build.html)
-How to preview a production build:
-npm run preview
 
-## End-to-end manual test checklist
+# Open browser to http://localhost:5173
+```
+
+### Production Build
+```bash
+npm run build       # Build for production
+npm run preview     # Preview production build
+```
+
+## ⌨️ Keyboard Shortcuts
+
+- **Space:** Capture a snapshot (when webcam is active)
+- **S:** Start/Stop webcam streaming
+
+*Note: Shortcuts are disabled while typing in input fields or text areas.*
+
+## 📖 Usage Guide
+
+### Starting Face Detection
+1. Click **Start** button in the navbar
+2. Grant webcam permission when prompted
+3. Green boxes will appear around detected faces
+4. Face attributes (age, gender, emotion) display in overlay labels
+
+### Capturing & Analyzing Images
+- **From Webcam:** Press **Space** or click **Capture (Space)** button
+- **Upload Image:** Click **Upload** → Select PNG/JPEG file
+- **Download Results:** Click **Download annotated** to save image with boxes
+
+### Configuring Settings
+1. Click **Settings** button
+2. Adjust:
+   - Detection frequency (150-5000ms)
+   - Model type (Tiny for speed, SSD for accuracy)
+   - Confidence threshold (0.0-1.0)
+   - Camera facing mode (mobile)
+   - Show/hide expressions
+3. Settings persist across sessions
+
+### Enrolling Faces
+1. Capture a frame with a detected face
+2. Click **Enroll** in the detection list
+3. Enter a name for the face
+4. Future detections will show the enrolled name
+
+## 📂 Project Structure
+
+```
+src/
+├── app/              # Redux store configuration
+├── components/       # React components (Navbar, Overlay, etc.)
+├── features/
+│   ├── camera/      # Camera state & services
+│   └── faces/       # Face detection & recognition
+├── pages/           # Main application pages
+└── utils/           # Model loading utilities
+```
+
+## 🧪 Testing
+
+### Running Tests
+```bash
+npm run test        # Unit tests
+npm run lint        # Code quality checks
+```
+
+### Manual Test Checklist
 
 - **Launch app**
   - Open the app over HTTPS. Confirm Navbar loads and no errors in console.

@@ -230,7 +230,7 @@ export default function Home() {
   return (
     <>
       <Navbar onUploadClick={handleUploadClick} onSettingsClick={() => setShowSettings(true)} />
-      <Container className="pb-4">
+      <Container fluid className="py-3">
         <Row className="g-4">
           <Col xs={12} lg={8}>
             <Card>
@@ -241,14 +241,14 @@ export default function Home() {
                     {fallbackMsg}
                   </Alert>
                 )}
-                <div ref={videoWrapRef} className="position-relative w-100" style={{ aspectRatio: '16/9' }}>
+                <div ref={videoWrapRef} className="position-relative w-100 ratio ratio-16x9">
                   {streaming ? (
                     <>
                       <div className="position-absolute top-0 start-0 w-100 h-100">
-                        <WebcamFeed onCapture={handleCapture} mirrored captureRef={captureRef} facingMode={facingMode} />
+                        <WebcamFeed onCapture={handleCapture} mirrored captureRef={captureRef} facingMode={facingMode} embed />
                       </div>
                       <div className="position-absolute top-0 start-0 w-100 h-100" style={{ pointerEvents: 'none' }}>
-                        <FaceOverlay videoRef={videoEl} detections={detections} showExpressions={showExpressions} />
+                        <FaceOverlay videoRef={videoEl} detections={detections} showExpressions={showExpressions} mirrored />
                       </div>
                     </>
                   ) : (
@@ -259,8 +259,7 @@ export default function Home() {
                             ref={uploadImgRef as any}
                             src={uploadUrl}
                             alt="Uploaded"
-                            className="position-absolute top-0 start-0 w-100 h-100"
-                            style={{ objectFit: 'contain' }}
+                            className="position-absolute top-0 start-0 w-100 h-100 object-fit-contain"
                           />
                           <div className="position-absolute top-0 start-0 w-100 h-100" style={{ pointerEvents: 'none' }}>
                             <FaceOverlay videoRef={uploadImgRef.current} detections={detections} showExpressions={showExpressions} />
@@ -277,7 +276,17 @@ export default function Home() {
                 {snapshotOnly && (
                   <div className="mt-2 text-muted small">Detection disabled. Use Capture to analyze snapshots.</div>
                 )}
-                <div className="mt-3 d-flex justify-content-end">
+                <div className="mt-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
+                  <div className="d-flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => captureRef.current?.()}
+                      disabled={!streaming}
+                    >
+                      Capture (Space)
+                    </Button>
+                  </div>
                   <Button
                     variant="outline-primary"
                     size="sm"

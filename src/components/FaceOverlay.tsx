@@ -5,9 +5,10 @@ type Props = {
   videoRef: HTMLVideoElement | HTMLImageElement | null;
   detections: FaceResult[];
   showExpressions?: boolean;
+  mirrored?: boolean;
 };
 
-export default function FaceOverlay({ videoRef, detections, showExpressions = true }: Props) {
+export default function FaceOverlay({ videoRef, detections, showExpressions = true, mirrored = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const size = useMemo(() => {
@@ -40,18 +41,27 @@ export default function FaceOverlay({ videoRef, detections, showExpressions = tr
     ctx.clearRect(0, 0, w, h);
     if (w === 0 || h === 0 || vw === 0 || vh === 0) return;
 
-    const scaleX = w / vw;
-    const scaleY = h / vh;
+    // object-fit: contain mapping
+    const s = Math.min(w / vw, h / vh);
+    const displayW = vw * s;
+    const displayH = vh * s;
+    const offsetX = (w - displayW) / 2;
+    const offsetY = (h - displayH) / 2;
 
     ctx.lineWidth = 2;
     ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.textBaseline = 'top';
 
     detections.forEach((d) => {
-      const x = Math.round(d.box.x * scaleX);
-      const y = Math.round(d.box.y * scaleY);
-      const bw = Math.round(d.box.width * scaleX);
-      const bh = Math.round(d.box.height * scaleY);
+      let x = Math.round(d.box.x * s + offsetX);
+      const y = Math.round(d.box.y * s + offsetY);
+      const bw = Math.round(d.box.width * s);
+      const bh = Math.round(d.box.height * s);
+
+      if (mirrored) {
+        // Flip horizontally within full canvas width
+        x = Math.round(w - (x + bw));
+      }
 
       ctx.strokeStyle = 'lime';
       ctx.strokeRect(x, y, bw, bh);
@@ -80,7 +90,7 @@ export default function FaceOverlay({ videoRef, detections, showExpressions = tr
         ctx.fillText(label, bx + padding, by + padding);
       }
     });
-  }, [detections, size, showExpressions]);
+  }, [detections, size, showExpressions, mirrored]);
 
   useEffect(() => {
     if (!videoRef) return;
