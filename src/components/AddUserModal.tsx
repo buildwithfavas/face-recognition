@@ -5,6 +5,7 @@ import * as faceapi from '@vladmandic/face-api';
 import { addKnownFace } from '../features/faces/Recognition';
 import { init } from '../features/faces/FaceService';
 import DatePicker from './DatePicker';
+import { sanitizeName } from '../utils/utils';
 
 interface AddUserModalProps {
   show: boolean;
@@ -93,6 +94,13 @@ export default function AddUserModal({ show, onHide, onUserAdded }: AddUserModal
       return;
     }
 
+    // Sanitize name input to prevent XSS and ensure data integrity
+    const sanitizedName = sanitizeName(name);
+    if (!sanitizedName) {
+      toast.error('Invalid name. Please use only letters, spaces, and common name characters.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -120,7 +128,7 @@ export default function AddUserModal({ show, onHide, onUserAdded }: AddUserModal
       }
 
       // Add the face to the database
-      addKnownFace(name.trim(), detection.descriptor, dob || undefined, gender || undefined);
+      addKnownFace(sanitizedName, detection.descriptor, dob || undefined, gender || undefined);
 
       // Reset form
       setName('');
@@ -133,7 +141,7 @@ export default function AddUserModal({ show, onHide, onUserAdded }: AddUserModal
       onUserAdded?.();
       onHide();
       
-      toast.success(`User "${name}" added successfully!`);
+      toast.success(`User "${sanitizedName}" added successfully!`);
     } catch (error) {
       console.error('Failed to add user:', error);
       toast.error('Failed to add user. Please try again with a different image.');

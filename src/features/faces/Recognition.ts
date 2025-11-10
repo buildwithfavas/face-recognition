@@ -72,13 +72,17 @@ function loadKnownFaces(): KnownFace[] {
 }
 
 function saveKnownFaces(items: KnownFace[]): void {
-  cache = items;
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      // Only update cache after successful save
+      cache = items;
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.error('Failed to save faces to localStorage:', error);
+    // Invalidate cache on error to ensure consistency
+    cache = null;
+    throw error;
   }
 }
 
@@ -101,7 +105,13 @@ export function addKnownFace(name: string, descriptor: Float32Array | number[], 
   const list = loadKnownFaces();
   const item: KnownFace = { name, descriptor: toArray(descriptor), dob, gender };
   list.push(item);
-  saveKnownFaces(list);
+  try {
+    saveKnownFaces(list);
+  } catch (error) {
+    // Remove the added item if save failed
+    list.pop();
+    throw new Error('Failed to save face. Please check your browser storage settings.');
+  }
 }
 
 /**
@@ -111,8 +121,15 @@ export function addKnownFace(name: string, descriptor: Float32Array | number[], 
 export function deleteFaceByIndex(index: number): void {
   const list = loadKnownFaces();
   if (index >= 0 && index < list.length) {
+    const deletedItem = list[index];
     list.splice(index, 1);
-    saveKnownFaces(list);
+    try {
+      saveKnownFaces(list);
+    } catch (error) {
+      // Restore the deleted item if save failed
+      list.splice(index, 0, deletedItem);
+      throw new Error('Failed to delete face. Please check your browser storage settings.');
+    }
   }
 }
 
@@ -126,10 +143,15 @@ export function deleteFaceByIndex(index: number): void {
 export function updateFaceByIndex(index: number, name: string, dob?: string, gender?: string): void {
   const list = loadKnownFaces();
   if (index >= 0 && index < list.length) {
+    const originalItem = { ...list[index] };
     list[index] = { ...list[index], name, dob, gender };
-    saveKnownFaces(list);
-    // Force cache invalidation to ensure fresh data on next read
-    cache = null;
+    try {
+      saveKnownFaces(list);
+    } catch (error) {
+      // Restore original item if save failed
+      list[index] = originalItem;
+      throw new Error('Failed to update face. Please check your browser storage settings.');
+    }
   }
 }
 

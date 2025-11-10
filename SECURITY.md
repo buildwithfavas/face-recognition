@@ -9,8 +9,8 @@
   - No images or descriptors are sent to any server by default.
 
 - **Storage**
-  - Known faces (name + descriptor) are stored in `localStorage` on the same device and browser profile.
-  - You can export/import this data manually for portability. Nothing is auto-synced.
+  - Registered users (name + facial descriptor) are stored in `localStorage` on the same device and browser profile.
+  - Data remains local to your browser and is never synced to any server.
 
 - **Build integrity**
   - Use HTTPS for production deployments to ensure secure camera access and model loading.
@@ -19,7 +19,7 @@
 - **Disabling/limiting access**
   - Stop the camera using the Stop button in the UI or close the tab.
   - Revoke site camera permissions in browser settings (Site Settings → Camera).
-  - Remove locally stored faces via browser storage tools or the app’s export/clear functions.
+  - Remove registered users via the in-app management interface or browser storage tools.
 
 - **Reporting a vulnerability**
   - Please open a private issue or contact the maintainers. Provide reproduction steps, browser version, and logs if possible.

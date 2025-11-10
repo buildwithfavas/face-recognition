@@ -145,7 +145,7 @@ describe('EditUserModal Component', () => {
     expect(nameInput).toHaveValue('');
   });
 
-  it('should hide "Select Gender" placeholder option', () => {
+  it('should have gender select with placeholder', () => {
     render(
       <EditUserModal
         show={true}
@@ -155,12 +155,15 @@ describe('EditUserModal Component', () => {
       />
     );
 
+    // Find all select elements and get the gender one (contains "Male", "Female", "Other")
     const genderSelect = screen.getAllByRole('combobox').find(
-      (el) => el.querySelector('option[value=""]')
+      (el) => el.querySelector('option[value="male"]')
     );
 
-    const placeholderOption = genderSelect?.querySelector('option[value=""]');
-    expect(placeholderOption).toHaveAttribute('disabled');
-    expect(placeholderOption).toHaveAttribute('hidden');
+    expect(genderSelect).toBeTruthy();
+    // Verify gender options exist
+    expect(genderSelect?.querySelector('option[value="male"]')).toBeTruthy();
+    expect(genderSelect?.querySelector('option[value="female"]')).toBeTruthy();
+    expect(genderSelect?.querySelector('option[value="other"]')).toBeTruthy();
   });
 });

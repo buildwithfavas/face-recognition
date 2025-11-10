@@ -31,6 +31,7 @@ export default function Home() {
   const [showManageFaces, setShowManageFaces] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Use custom hook for detection settings
   const {
@@ -106,14 +107,22 @@ export default function Home() {
   }, [streaming, videoEl, dispatch, intervalMs, useTiny, minConfidence, forceUpdate]);
 
   const runDetectionOnDataUrl = useCallback(async (dataUrl: string) => {
-    const img = new Image();
-    img.src = dataUrl;
-    await new Promise((res, rej) => {
-      img.onload = () => res(null);
-      img.onerror = rej;
-    });
-    const results: FaceResult[] = await detectFaces(img);
-    dispatch(setDetections(results));
+    setIsProcessing(true);
+    try {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((res, rej) => {
+        img.onload = () => res(null);
+        img.onerror = rej;
+      });
+      const results: FaceResult[] = await detectFaces(img);
+      dispatch(setDetections(results));
+    } catch (error) {
+      console.error('Detection failed:', error);
+      dispatch(setDetections([]));
+    } finally {
+      setIsProcessing(false);
+    }
   }, [dispatch]);
 
   const handleCapture = useCallback((dataUrl: string) => {
@@ -145,6 +154,38 @@ export default function Home() {
         onSettingsClick={() => setShowSettings(true)}
         onHelpClick={() => setShowHelp(true)}
       />
+      {isProcessing && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 70,
+            right: 20,
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            padding: '12px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}
+        >
+          <div 
+            style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid var(--accent-blue)',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}
+          />
+          <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '500' }}>
+            Processing...
+          </span>
+        </div>
+      )}
       <Container fluid className="p-0">
         <Row className="g-0" style={{ minHeight: 'calc(100vh - 56px)' }}>
           <VideoPanel

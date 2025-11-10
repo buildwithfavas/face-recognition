@@ -3,6 +3,7 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { updateFaceByIndex, type KnownFace } from '../features/faces/Recognition';
 import DatePicker from './DatePicker';
+import { sanitizeName } from '../utils/utils';
 
 interface EditUserModalProps {
   show: boolean;
@@ -38,16 +39,21 @@ export default function EditUserModal({ show, onHide, face, faceIndex, onUserUpd
       return;
     }
 
+    // Sanitize name input to prevent XSS and ensure data integrity
+    const sanitizedName = sanitizeName(name);
+    if (!sanitizedName) {
+      toast.error('Invalid name. Please use only letters, spaces, and common name characters.');
+      return;
+    }
+
     try {
-      const updatedName = name.trim();
-      
       // Update the face name using the Recognition module
-      updateFaceByIndex(faceIndex, updatedName, dob || undefined, gender || undefined);
+      updateFaceByIndex(faceIndex, sanitizedName, dob || undefined, gender || undefined);
       
       // Notify parent to refresh the list
       onUserUpdated?.();
       
-      toast.success(`User "${updatedName}" updated successfully!`);
+      toast.success(`User "${sanitizedName}" updated successfully!`);
       
       // Close modal after successful update
       onHide();

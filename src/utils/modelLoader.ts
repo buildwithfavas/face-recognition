@@ -10,14 +10,15 @@ function status(cb: ((s: string) => void) | undefined, s: string) {
   if (cb) cb(s);
 }
 
-async function loadAll(base: string, useTiny: boolean, onProgress?: (s: string) => void): Promise<void> {
-  if (!faceapi.nets.tinyFaceDetector.isLoaded && !faceapi.nets.ssdMobilenetv1.isLoaded) {
-    status(onProgress, useTiny ? 'loading tiny face detector' : 'loading ssd mobilenetv1');
-    if (useTiny) {
-      await faceapi.nets.tinyFaceDetector.loadFromUri(base);
-    } else {
-      await faceapi.nets.ssdMobilenetv1.loadFromUri(base);
-    }
+async function loadAll(base: string, onProgress?: (s: string) => void): Promise<void> {
+  // Always load both detector models to ensure they're available
+  if (!faceapi.nets.tinyFaceDetector.isLoaded) {
+    status(onProgress, 'loading tiny face detector');
+    await faceapi.nets.tinyFaceDetector.loadFromUri(base);
+  }
+  if (!faceapi.nets.ssdMobilenetv1.isLoaded) {
+    status(onProgress, 'loading ssd mobilenetv1');
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(base);
   }
   if (!faceapi.nets.faceLandmark68Net.isLoaded) {
     status(onProgress, 'loading face landmark 68');
@@ -39,14 +40,19 @@ async function loadAll(base: string, useTiny: boolean, onProgress?: (s: string) 
 }
 
 export async function loadModels(opts?: LoadModelsOptions): Promise<void> {
-  const useTiny = opts?.useTiny ?? true;
   const onProgress = opts?.onProgress;
   const localBase = opts?.baseUrl ?? '/models';
   try {
-    await loadAll(localBase, useTiny, onProgress);
+    await loadAll(localBase, onProgress);
     return;
-  } catch {
-    const cdnBase = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
-    await loadAll(cdnBase, useTiny, onProgress);
+  } catch (localError) {
+    console.warn('Local model loading failed, trying CDN fallback:', localError);
+    try {
+      const cdnBase = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
+      await loadAll(cdnBase, onProgress);
+    } catch (cdnError) {
+      console.error('Both model loading attempts failed:', cdnError);
+      throw new Error('Failed to load face detection models from both local and CDN sources. Please check your internet connection.');
+    }
   }
 }

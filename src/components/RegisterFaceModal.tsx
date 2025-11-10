@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import type { FaceResult } from '../features/faces/types';
 import { addKnownFace } from '../features/faces/Recognition';
 import DatePicker from './DatePicker';
+import { sanitizeName } from '../utils/utils';
 
 interface RegisterFaceModalProps {
   show: boolean;
@@ -42,10 +43,18 @@ export default function RegisterFaceModal({ show, onHide, faceToRegister, onRegi
       return;
     }
 
+    // Sanitize name input to prevent XSS and ensure data integrity
+    const sanitizedName = sanitizeName(name);
+    if (!sanitizedName) {
+      toast.error('Invalid name. Please use only letters, spaces, and common name characters.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Save the face with the provided name
-      addKnownFace(name.trim(), faceToRegister.features, dob || undefined, gender || undefined);
+      
+      // Save the face with the sanitized name
+      addKnownFace(sanitizedName, faceToRegister.features, dob || undefined, gender || undefined);
       
       // Reset and close
       setName('');
