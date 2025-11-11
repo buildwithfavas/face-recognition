@@ -73,6 +73,18 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
+.navbar-container-padding {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+}
+
+@media (min-width: 768px) {
+  .navbar-container-padding {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+}
+
 .card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -115,6 +127,22 @@ body {
 
 .border {
   border-color: var(--border-color) !important;
+}
+
+/* Responsive video container */
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+/* On mobile, use auto height to fit content better */
+@media (max-width: 991px) {
+  .video-container {
+    aspect-ratio: auto;
+    min-height: 300px;
+    max-height: 50vh;
+  }
 }
 
 /* Spinner animation for loading states */

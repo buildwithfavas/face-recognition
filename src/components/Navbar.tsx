@@ -9,8 +9,8 @@ interface NavbarProps {
 
 export default function Navbar({ title = 'Facial Recognition' }: NavbarProps) {
   return (
-    <BsNavbar className="py-3" style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)' }}>
-      <Container fluid className="px-5 px-md-4">
+    <BsNavbar className="py-3" style={{ backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', paddingLeft: '20px', paddingRight: '20px' }}>
+      <Container fluid style={{ paddingLeft: 0, paddingRight: 0, maxWidth: '100%' }}>
         <BsNavbar.Brand className="d-flex align-items-center gap-2" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '18px' }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* Camera body */}

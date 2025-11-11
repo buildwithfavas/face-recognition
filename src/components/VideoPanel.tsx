@@ -66,7 +66,7 @@ export default function VideoPanel({
           
           <div 
             ref={videoWrapRef} 
-            className="position-relative w-100 ratio ratio-16x9"
+            className="video-container"
             style={{
               border: '2px solid var(--accent-blue)',
               borderRadius: '8px',
